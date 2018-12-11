@@ -10,6 +10,7 @@ import os
 import sys
 import json
 from publish_api import Publish_API
+from cmdb_api import CMDB_API
 from public import lock_json
 import fire
 
@@ -36,6 +37,11 @@ def data_save(file_name, data):
 
 
 def get_publish_data(flow_id):
+    """
+    获取发布配置文件信息
+    :param flow_id:
+    :return:
+    """
     file_name = '/tmp/publish_{}.json'.format(flow_id)
     if not os.path.exists(file_name):
         print('[Error]: Not Fount config file... ')
@@ -47,20 +53,59 @@ def get_publish_data(flow_id):
             for data in ret:
                 return data
 
-def get_all_hosts():
-    now_all_hosts = {'172.16.0.20': ['22', 'root', 'None'], '172.16.0.228': ['22', 'root', '123456'],
-                     '172.16.0.101': ['22', 'root', '1']}
+
+def get_all_hosts(flow_id):
+    """
+    获取所有主机，需要处理以下：
+    1. 用户手动输入的主机   publish_host
+    2. 用户从CMDB里面调用的主机   cmdb_host
+    :param flow_id:
+    :return:
+    """
+    # 将所有主机放到一个列表里面
     all_hosts = []
-    for hosts_key in now_all_hosts.keys():
-        hosts_value = now_all_hosts[hosts_key]
-        hosts_data = {
-            'ip': hosts_key,
-            'port': hosts_value[0],
-            'user': hosts_value[1],
-            'password': hosts_value[2]
-        }
-        all_hosts.append(hosts_data)
+    # 首先处理publish_host主机
+    data = get_publish_data(flow_id)
+    publish_hosts_str = data.get('publish_hosts')
+    publish_hosts_list = publish_hosts_str.split('\n')
+    keys_list = ['ip', 'port', 'user', 'password']
+    for publish_host in publish_hosts_list:
+        values_list = publish_host.split(' ')
+        host_dict = dict(zip(keys_list, values_list))
+        all_hosts.append(host_dict)
+
+    # 处理CMDB主机类型
+    publish_host_api = data.get('publish_hosts_api')
+    if not publish_host_api:
+        print('[INFO]: 没有获取到CMDB主机信息，自动跳过')
+    else:
+        cmdb_obj = CMDB_API()
+        cmdb_hosts_list = cmdb_obj.get_ec2_info(publish_host_api)
+        for cmdb_host in cmdb_hosts_list:
+            cmdb_host_dict = {
+                "ip": cmdb_host.get('ip'),
+                "port": cmdb_host.get('port'),
+                "user": cmdb_host.get('username'),
+                "password": cmdb_host.get('password'),
+            }
+            all_hosts.append(cmdb_host_dict)
+
     return all_hosts
+
+    # publish_hosts = {'172.16.0.20': ['22', 'root', 'None'], '172.16.0.228': ['22', 'root', '123456'],
+    # #                  '172.16.0.101': ['22', 'root', '1']}
+    # all_hosts = []
+    # for hosts_key in publish_hosts.keys():
+    #     hosts_value = publish_hosts[hosts_key]
+    #     hosts_data = {
+    #         'ip': hosts_key,
+    #         'port': hosts_value[0],
+    #         'user': hosts_value[1],
+    #         'password': hosts_value[2]
+    #     }
+    #     all_hosts.append(hosts_data)
+    # print('all_hosts----->',all_hosts)
+    # return all_hosts
 
 
 def main(publish_name, flow_id):

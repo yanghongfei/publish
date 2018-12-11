@@ -28,22 +28,26 @@ class DeployCode():
         if not isinstance(host, dict):
             raise ValueError()
 
-        print(host)
-
         '''/tmp下的代码是upload_code脚本上传过来的'''
         tmp_code_path = '/tmp/{}'.format(self.repo_name)
-        if not os.path.exists(tmp_code_path):
-            print('[Error]: No code found')
-            exit(-1)
+        # if not os.path.exists(tmp_code_path):
+        #     print('[Error]: No code found')
+        #     sys.exit(-100)
 
         ip = host.get('ip')
         port = host.get('port', 22)
         user = host.get('user', 'root')
         password = host.get('password')
-        code_path = self.publish_path + self.repo_name
-
-        depoly_cmd = "sshpass -p {} rsync -ahqzt --delete -e 'ssh -p {}  -o StrictHostKeyChecking=no '  {} {}@{}:{}".format(
-            password, port, tmp_code_path, user, ip, code_path)
+        # code_path = self.publish_path + self.repo_name
+        # depoly_cmd = "sshpass -p {} rsync -ahqzt --delete -e 'ssh -p {}  -o StrictHostKeyChecking=no '  {} {}@{}:{}".format(
+        #     password, port, tmp_code_path, user, ip, self.publish_path)
+        rsync_cmd = 'rsync -ahqzt --delete {} {}'.format(tmp_code_path, self.publish_path)
+        depoly_cmd = "sshpass -p {} ssh -p {} -o StrictHostKeyChecking=no {}@{} '{}'".format(
+            password,
+            port,
+            user, ip,
+            rsync_cmd)
+        # print('[CMD:]', depoly_cmd)
 
         try:
             depoly_status, depoly_output = exec_shell(depoly_cmd)
@@ -55,13 +59,13 @@ class DeployCode():
 
         except Exception as e:
             print(e)
+            exit(-500)
 
-
-def main(publish_name):
+def main(flow_id):
     print('[INFO]: 这部分是将代码正式下发/同步到你的代码目录')
-    data = get_publish_data(publish_name)  # 获取发布信息
+    data = get_publish_data(flow_id)  # 获取发布信息
     obj = DeployCode(data)
-    all_hosts = get_all_hosts()
+    all_hosts = get_all_hosts(flow_id)
     exec_thread(func=obj.code_deploy, iterable1=all_hosts)
 
 

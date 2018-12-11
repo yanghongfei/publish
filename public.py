@@ -65,9 +65,6 @@ def exec_shell(cmd):
         return ret, stdout.decode('utf-8').replace('\n', '')
 
 
-
-
-
 def ssh_connect(ip, port, user, password):
     try:
         _ssh_fd = paramiko.SSHClient()
@@ -75,8 +72,7 @@ def ssh_connect(ip, port, user, password):
         _ssh_fd.connect(hostname=ip, port=port, username=user, password=password)
         return _ssh_fd
     except Exception as e:
-        print('[Error]: ssh {}@{} {}'.format(user, ip,e))
-
+        print('[Error]: ssh {}@{} {}'.format(user, ip, e))
 
 
 def exec_thread(func, iterable1):

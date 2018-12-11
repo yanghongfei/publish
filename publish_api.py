@@ -18,6 +18,7 @@ class Publish_API():
         self.pwd = 'passwd'
         self.key = 'key'
 
+
     @property
     def get_mfa(self):
         t = pyotp.TOTP(self.key)

@@ -31,11 +31,14 @@ class PullCode():
     def git_clone(self):
         '''检测发布目录没有代码则进行git clone'''
         code_dir = self.publish_path + self.repo_name
-
         try:
             if not os.path.exists(code_dir):
                 print('[INFO]: Start pulling a new codebase to {}'.format(code_dir))
-                git_clone_cmd = 'cd {} && git clone {}'.format(self.publish_path, self.repository)  # 克隆代码
+                git_clone_cmd = '[ ! -d "{}" ] && mkdir {} ;cd {} && git clone {}'.format(self.publish_path,
+                                                                                          self.publish_path,
+                                                                                          self.publish_path,
+                                                                                          self.repository)  # 克隆代码
+                print('[CMD:] ', git_clone_cmd)
                 git_clone_status, git_clone_output = exec_shell(git_clone_cmd)
                 if git_clone_status == 0:
                     print('[Success]: git clone {} sucess...'.format(self.repository))
@@ -50,9 +53,13 @@ class PullCode():
     def checkout_tag(self, git_tag):
         '''切换分支'''
         git_fetch_cmd = 'cd {}/{} && git fetch -t -p -f && git fetch --all'.format(self.publish_path,
+
                                                                                    self.repo_name)  # 更新代码
         git_checkout_cmd = 'cd {}/{} && git clean -df  && git checkout {}'.format(
             self.publish_path, self.repo_name, git_tag)  # 切换分支
+
+        # print('[CMD:]', git_fetch_cmd)
+        # print('[CMD:]', git_checkout_cmd)
         try:
             git_fetch_status, git_fetch_output = exec_shell(git_fetch_cmd)
             if git_fetch_status == 0:
@@ -67,16 +74,17 @@ class PullCode():
                 exit(403)
         except Exception as e:
             print(e)
+            exit(-500)
 
 
-def main(publish_name, git_tag):
+def main(flow_id, git_tag):
     """
-    :param publish_name: 发布应用的名称
+    :param flow_id: 订单ID
     :param git_tag: Git Tag名字
     :return:
     """
     print('[INFO]: 这部分是用来在构建机器上拉取代码，切换Tag操作')
-    data = get_publish_data(publish_name)  # 配置信息
+    data = get_publish_data(flow_id)  # 配置信息
     obj = PullCode(data)  # 初始化类
     obj.git_clone()  # 克隆代码
     obj.checkout_tag(git_tag)  # 切换Tag

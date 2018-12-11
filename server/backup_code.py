@@ -13,6 +13,7 @@ Base_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(Base_DIR)
 from public import exec_shell
 from public import exec_thread
+
 from get_publish_info import get_publish_data, get_all_hosts
 import fire
 
@@ -38,41 +39,29 @@ class BackupCode():
         user = host.get('user', 'root')
         password = host.get('password')
         code_path = self.publish_path + self.repo_name
-        # 判断代码仓库大小和系统盘/tmp剩余空间是否符合备份
-        check_disk_cmd = "[[ `du -s %s | awk {'print $1'}` < `df /tmp | awk {'print $4'}` ]] && echo 'success' " % (
-            code_path)
-        check_cmd = "sshpass -p {} ssh -p {} -o StrictHostKeyChecking=no {}@{} 'echo check_disk' && {}".format(password,
-                                                                                                               port,
-                                                                                                               user, ip,
-                                                                                                               check_disk_cmd)
         try:
-            check_status, check_output = exec_shell(check_cmd)
-            if check_status != 0:
-                print('[Error]: Host:{} 失败，错误信息: {}'.format(ip, check_output))
-                exit(-3)
-            else:
-                '''检查通过才进行备份操作'''
-                backup_cmd = '[ ! -d "{}" ] && mkdir {} ; find {}/* -maxdepth 0 -type d -ctime +1 | xargs rm -rf ;cp -aR {} {} && echo success'.format(
-                    self.backup_dir, self.backup_dir, self.backup_dir, code_path, self.backup_dir)
-                ssh_cmd = "sshpass -p {} ssh -p {} -o StrictHostKeyChecking=no {}@{} '{}'".format(password, port, user,
-                                                                                                  ip,
-                                                                                                  backup_cmd)
+            backup_cmd = '[ ! -d "{}" ] && mkdir {} ; cp -aR {} {} && echo success'.format(
+                self.backup_dir, self.backup_dir, code_path, self.backup_dir)
+            ssh_cmd = "sshpass -p {} ssh -p {} -o StrictHostKeyChecking=no {}@{} '{}'".format(password, port, user,
+                                                                                              ip,
+                                                                                              backup_cmd)
 
-                ssh_status, ssh_output = exec_shell(ssh_cmd)
-                if ssh_status == 0:
-                    print('[Success]: Host: {}  备份路径: {}'.format(ip, self.backup_dir))
-                else:
-                    print('[Error]:  Host: {} 备份失败，信息: {} faild'.format(ip, ssh_output))
-                    print(ssh_output)
+            ssh_status, ssh_output = exec_shell(ssh_cmd)
+            if ssh_status == 0:
+                print('[Success]: Host: {}  备份路径: {}'.format(ip, self.backup_dir))
+            else:
+                print('[Error]:  Host: {} 备份失败，信息: {} faild'.format(ip, ssh_output))
+                print(ssh_output)
         except Exception as e:
             print(e)
+            exit(-500)
 
 
-def main(publish_name):
+def main(flow_id):
     print('[INFO]: 这部分是备份你目标主机的代码,只保留一天备份，若不需要可以跳过此步骤')
-    data = get_publish_data(publish_name)  # 获取发布信息
+    data = get_publish_data(flow_id)  # 获取发布信息
     obj = BackupCode(data)
-    all_hosts = get_all_hosts()
+    all_hosts = get_all_hosts(flow_id)
     exec_thread(func=obj.code_backup, iterable1=all_hosts)
 
 
