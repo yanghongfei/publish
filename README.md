@@ -11,8 +11,11 @@
 - `custom_operation.py`: 自定义操作，比如下发完代码后需要重启xxx进程， `systemctl restart nginx`
 
 ## Bucket发布
-### COS发布
+
+- `upload_s3`：上传资源到AWS S3
 - `upload_cos`: 上传资源到腾讯云COS
+- `upload_oss`: 上传资源到阿里云OSS
+
 
 ### 效果图
 - 发布应用配置信息
