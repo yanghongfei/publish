@@ -24,3 +24,30 @@
 - 提交发布
 
 ![PublishCommit](images/commit_publish.png)
+
+### 数据类型
+```json
+[{
+	"id": 1,
+	"publish_name": "yanghongfeitest",
+	"publish_type": "service",
+	"repository": "git@gitlab.domai.comn:ops/yanghongfei.git",
+	"build_host": "172.16.0.101",
+	"exclude_file": "flash\n.git/",
+	"temp_name": "yanghongfeitest",
+	"publish_type1": null,
+	"publish_path": "/var/www/",
+	"publish_hosts": "172.16.0.20 22 root password",
+	"publish_hosts_api": "http://gw.domain.com/cmdb/api/cmdb/server_list/?group=xxxx",
+	"bucket_type": "oss",
+	"region": "",
+	"bucket_name": "",
+	"bucket_path": "",
+	"SecretID": "",
+	"SecretKey": "",
+	"docker_registry": "",
+	"k8s_api": "",
+	"namespace": "",
+	"create_time": "2018-12-04 16:29:21"
+}]
+```
